@@ -219,6 +219,7 @@ applyGreeting();
 
 </script>
 <script>
+
 /* ---------- Tiny pixel-art engine ---------- */
 function Pix(w,h){
   const g=Array.from({length:h},()=>Array(w).fill(null));
@@ -365,32 +366,74 @@ const Music=(()=>{
 
 </script>
 <script>
+/* ---------- Sound effects: falling layers, landings, candle ignition ---------- */
+const Sfx=(()=>{
+  let a,noise,m;
+  function unlock(){try{
+    if(!a){const A=window.AudioContext||window.webkitAudioContext;a=new A();m=a.createGain();m.gain.value=.9;m.connect(a.destination);
+      noise=a.createBuffer(1,a.sampleRate|0,a.sampleRate);const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+    if(a.state==='suspended')a.resume()}catch(e){a=null}}
+  function env(g,t,v,att,dur){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur)}
+  function nz(t,dur,type,f0,f1,v,q){const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+    s.buffer=noise;s.loop=true;f.type=type;f.Q.value=q||1;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    env(g,t,v,Math.min(.02,dur/3),dur);s.connect(f);f.connect(g);g.connect(m);s.start(t);s.stop(t+dur+.05)}
+  function tone(f0,f1,t,dur,v,type){const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';
+    o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);env(g,t,v,.005,dur);o.connect(g);g.connect(m);o.start(t);o.stop(t+dur+.05)}
+  return{unlock,
+    intro(){ if(!a)return; const now=a.currentTime+.05;      // same timeline as the CSS animation
+      for(let i=0;i<5;i++){
+        const fall=now+i*.45+.2,land=fall+.66;
+        nz(fall,.62,'bandpass',2200,450,.05,.8);                                   // whoosh as the layer falls
+        if(i===0){tone(1300,900,land,.28,.1,'sine');tone(1950,1500,land,.22,.05,'sine')}   // plate clink
+        else if(i<4){tone(175-i*12,55,land,.3,.55,'sine');nz(land,.09,'lowpass',1000,200,.3)} // soft cake thud
+        else{[0,.08,.16].forEach((k,j)=>tone(950+j*250,750,land+k,.07,.1,'triangle'))}       // candles tick into place
+      }
+      [0,.14,.28].forEach((k,j)=>{const t=now+3.15+k;                               // each candle lights
+        nz(t,.14,'highpass',3500,7000,.1);                                         // match scratch
+        nz(t+.1,.4,'bandpass',500,2600,.12,.6);tone(130,60,t+.1,.3,.14,'sine');    // fwoomp
+        for(let c=0;c<5;c++)nz(t+.25+Math.random()*.9,.025,'highpass',4000,9000,.05)}) // little crackles
+    }};
+})();
+
 /* ---------- Opening: cake falls layer by layer ---------- */
 const start=document.getElementById('start'),gift=document.getElementById('gift'),btn=document.getElementById('giftBtn');
 let confetti=[],busy=true,timers=[];
 const later=(fn,ms)=>timers.push(setTimeout(fn,ms));
 function playIntro(){
+  try{Sfx.intro()}catch(e){}
   document.documentElement.classList.add('ready');
-  start.classList.remove('play');void start.offsetWidth;start.classList.add('play');
+  start.classList.remove('settled');start.classList.remove('play');void start.offsetWidth;start.classList.add('play');later(()=>start.classList.add('settled'),4200);
   busy=true;later(()=>{busy=false},3900);
 }
-later(playIntro,350);
-setTimeout(()=>{busy=false},4500);
+/* Browsers only allow sound after a tap, so a tiny start screen unlocks audio and then the cake falls */
+(function(){
+  const g=document.createElement('div');g.id='gate';
+  g.innerHTML='<div><div class="gemoji">🥳🎂🥳</div><button id="goBtn">"Lets Start Your Celebration🥳🥰"</button></div>';
+  document.body.appendChild(g);document.documentElement.classList.add('ready');
+  let went=false;
+  function go(){if(went)return;went=true;Sfx.unlock();g.classList.add('gone');setTimeout(()=>g.remove(),800);playIntro();}
+  g.addEventListener('click',go);
+})();
 
 /* ---------- Transition: 180° turn, city fly-by, then the next page ---------- */
 let opening=false;
-btn.addEventListener('click',()=>{
-  if(opening)return;opening=true;                       // works any time, even during the cake intro
-  try{btn.classList.add('shake');Music.start()}catch(e){}   // audio must start inside the tap
+function tapGift(){
+  if(opening)return;opening=true;                          // works any time, even during the cake intro
+  try{btn.classList.add('shake');Music.start()}catch(e){}  // audio must start inside the tap
   later(open,600);
-});
+}
+btn.addEventListener('click',tapGift);
+btn.addEventListener('pointerup',tapGift);
 function showGift(){gift.classList.remove('off');gift.classList.add('in')}
+function forceGift(){                                       // last resort if transitions misbehave on a device
+  showGift();gift.style.cssText='opacity:1;visibility:visible;transform:none';start.style.visibility='hidden';
+}
 function open(){
   try{applyGreeting()}catch(e){}
   document.body.classList.add('opened');   // camera glides along the city
   start.classList.add('off');              // opening page turns 180° and leaves
   later(showGift,3000);                    // city is shown first
-  later(showGift,3800);                    // safety: make sure the wish page appears
+  later(forceGift,5000);                   // safety: the wish page must appear
   later(party,4300);
 }
 function party(){
@@ -405,7 +448,7 @@ function party(){
 }
 function clearConfetti(){confetti.forEach(c=>c.remove());confetti=[]}
 function replay(){
-  timers.forEach(clearTimeout);timers=[];clearConfetti();Music.stop();busy=true;
+  timers.forEach(clearTimeout);timers=[];clearConfetti();Music.stop();busy=true;gift.removeAttribute('style');start.removeAttribute('style');
   document.body.classList.remove('opened');
   gift.classList.add('off');gift.classList.remove('in');   // turns back 180°
   later(()=>{applyGreeting();btn.classList.remove('shake');start.classList.remove('play');start.classList.remove('off');opening=false},2200);
