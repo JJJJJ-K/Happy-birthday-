@@ -199,10 +199,8 @@ function moment(){
   const h=new Date().getHours();
   if(h>=1&&h<12)  return {hello:"Good morning, Risie 😆🥰🥳",   sub:"Today is all about you ✨",        wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
   if(h>=12&&h<18) return {hello:"Good afternoon, Risie 😆🥰🥳", sub:"Today is all about you ✨",        wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
-  if(h>=18&&h<24) return {hello:"Good evening, Risie 😆🥰🥳",   sub:"Tonight is all about you ✨",      wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
- 
- return            {hello:"HAPPY BIRTHDAY RISIEEEE🥳😅🥰",            sub:"I hope you enjoy this gift and this special day🙂‍↕️☺️✨", wish:"May this new chapter be filled with happiness, beautiful memories and amazing moments."};
-}
+  return {hello:"Good evening, Risie 😆🥰🥳",   sub:"Tonight is all about you ✨",      wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
+ }
 function applyGreeting(){
   const m=moment();
   document.querySelectorAll('[data-hello]').forEach(e=>e.textContent=m.hello);
