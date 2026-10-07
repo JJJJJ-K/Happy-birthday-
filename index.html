@@ -202,23 +202,54 @@ body.opened .mute{opacity:1;pointer-events:auto;transition:opacity .6s 3.2s}
 <button class="mute" id="muteBtn" aria-label="Toggle music">🎵</button>
 
 <script>
-/* ---------- Time-aware greetings ---------- */
 function moment(){
-  const h=new Date().getHours();
-  if(h>=1&&h<12)  return {hello:"Good morning, Risie 😆🥰🥳",   sub:"Today is all about you ✨",        wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
-  if(h>=12&&h<18) return {hello:"Good afternoon, Risie 😆🥰🥳", sub:"Today is all about you ✨",        wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
-  return {hello:"Good evening, Risie 😆🥰🥳",   sub:"Tonight is all about you ✨",      wish:"Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"};
- }
-function applyGreeting(){
-  const m=moment();
-  document.querySelectorAll('[data-hello]').forEach(e=>e.textContent=m.hello);
-  document.querySelectorAll('[data-sub]').forEach(e=>e.textContent=m.sub);
-  document.querySelectorAll('[data-wish]').forEach(e=>e.textContent=m.wish);
-}
-applyGreeting();
+  const h = new Date().getHours();
 
+  if(h >= 1 && h < 12)
+    return {
+      hello: "Good morning, Risie 😆🥰🥳",
+      sub: "Today is all about you ✨",
+      wish: "Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"
+    };
+
+  if(h >= 12 && h < 18)
+    return {
+      hello: "Good afternoon, Risie 😆🥰🥳",
+      sub: "Today is all about you ✨",
+      wish: "Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"
+    };
+
+  return {
+    hello: "Good evening, Risie 😆🥰🥳",
+    sub: "Tonight is all about you ✨",
+    wish: "Though hindi kita kayang kausapin in personal hehe😅😆, I just want to tell you happy birthday🥳🎂❤️, and I hope you appreciate this :) -∆-.  -jaow"
+  };
+}
+
+function typeWriter(element, text, speed = 45) {
+  element.textContent = "";
+  let i = 0;
+
+  function type() {
+    if (i < text.length) {
+      element.textContent += text.charAt(i);
+      i++;
+      setTimeout(type, speed);
+    }
+  }
+
+  type();
+}
+
+function applyGreeting(){
+  const m = moment();
+
+  document.querySelectorAll('[data-wish]')
+    .forEach(e => typeWriter(e, m.wish, 45));
+}
+
+applyGreeting();
 </script>
-<script>
 /* ---------- Tiny pixel-art engine ---------- */
 function Pix(w,h){
   const g=Array.from({length:h},()=>Array(w).fill(null));
