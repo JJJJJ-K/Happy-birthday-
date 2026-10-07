@@ -407,7 +407,7 @@ function playIntro(){
 /* Browsers only allow sound after a tap, so a tiny start screen unlocks audio and then the cake falls */
 (function(){
   const g=document.createElement('div');g.id='gate';
-  g.innerHTML='<div><div class="gemoji">🥳🎂🥳</div><button id="goBtn">Lets Start Your Celebration🥳🥰</button></div>';
+  g.innerHTML='<div><div class="gemoji">🥳🎂🥳</div><button id="goBtn">Tap To Start Your Celebration🥳🥰</button></div>';
   document.body.appendChild(g);document.documentElement.classList.add('ready');
   let went=false;
   function go(){if(went)return;went=true;Sfx.unlock();g.classList.add('gone');setTimeout(()=>g.remove(),800);playIntro();}
