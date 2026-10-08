@@ -254,8 +254,7 @@ function Pix(w,h){
 (function(){
   const pal={o:'#4a2a1b',b:'#cf8f5d',d:'#b87548',l:'#efc194',p:'#ff8fb8',n:'#2b1810',m:'#ff82d8',y:'#ffe78a',h:'#9f8cff',e:'#2b1810'};
   const W=36,H=40,B=Pix(W,H);
-  B.ell(10,37,4,2,'d');B.ell(24,37,4,2,'d');                       // feet
-  B.ell(9,8,4,4,'b');B.ell(25,8,4,4,'b');B.ell(9,8,2,2,'l');B.ell(25,8,2,2,'l'); // ears
+    B.ell(9,8,4,4,'b');B.ell(25,8,4,4,'b');B.ell(9,8,2,2,'l');B.ell(25,8,2,2,'l'); // ears
   B.ell(17,29,10,8,'b');B.ell(17,31,6,5,'l');                       // body + belly
   B.ell(17,16,11,9,'b');B.ell(17,19,5,3,'l');                       // head + muzzle
   B.rect(16,17,2,2,'n');B.rect(16,19,2,1,'n');B.rect(15,20,1,1,'n');B.rect(18,20,1,1,'n');B.rect(16,21,2,1,'n'); // nose+smile
@@ -265,6 +264,9 @@ function Pix(w,h){
   B.rect(2,27,9,8,'h');B.rect(6,27,1,8,'y');B.rect(2,30,9,1,'y');B.rect(3,25,3,2,'m');B.rect(7,25,3,2,'m'); // gift
   B.ell(8,32,3,4.5,'b');                                            // left arm hugging gift
   B.outline('o');
+  const FS=Pix(W,H);FS.ell(10,37,4,2,'d');FS.ell(24,37,4,2,'d');FS.outline('o');
+  const FA=Pix(W,H);FA.ell(10,35,4,2,'d');FA.ell(24,37,4,2,'d');FA.outline('o');
+  const FB=Pix(W,H);FB.ell(10,37,4,2,'d');FB.ell(24,35,4,2,'d');FB.outline('o');
   const A=Pix(W,H);A.ell(27,29,3,5,'b');A.outline('o');
   const R=Pix(W,H);R.ell(30,20,3,6,'b');R.ell(30,15,2,1.5,'l');R.outline('o');
   const E=Pix(W,H);E.rect(12,14,2,3,'e');E.rect(20,14,2,3,'e');
@@ -273,7 +275,7 @@ function Pix(w,h){
     .map(([pos,d])=>heart.replace('class="heart"',`class="heart" style="${pos};animation-delay:${d}"`)).join('');
   document.getElementById('bearWrap').innerHTML=hs+
    `<svg class="bear" viewBox="0 0 ${W} ${H}" shape-rendering="crispEdges" role="img" aria-label="A pixel teddy bear holding a gift and waving">
-     ${B.rects(pal)}<g class="armA">${A.rects(pal)}</g><g class="armB">${R.rects(pal)}</g><g class="eyes">${E.rects(pal)}</g></svg>`;
+     <g class="fS">${FS.rects(pal)}</g><g class="fA">${FA.rects(pal)}</g><g class="fB">${FB.rects(pal)}</g>${B.rects(pal)}<g class="armA">${A.rects(pal)}</g><g class="armB">${R.rects(pal)}</g><g class="eyes">${E.rects(pal)}</g></svg>`;
 })();
 
 </script>
@@ -365,32 +367,49 @@ const Music=(()=>{
 
 </script>
 <script>
-/* ---------- Sound effects: falling layers, landings, candle ignition ---------- */
+/* ---------- Natural foley-style sound effects (no beeps, no pitch sweeps) ---------- */
 const Sfx=(()=>{
-  let a,noise,m;
+  let a,white,brown,m;
   function unlock(){try{
-    if(!a){const A=window.AudioContext||window.webkitAudioContext;a=new A();m=a.createGain();m.gain.value=.9;m.connect(a.destination);
-      noise=a.createBuffer(1,a.sampleRate|0,a.sampleRate);const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+    if(!a){const A=window.AudioContext||window.webkitAudioContext;a=new A();m=a.createGain();m.gain.value=1;m.connect(a.destination);
+      const n=a.sampleRate*2|0;white=a.createBuffer(1,n,a.sampleRate);brown=a.createBuffer(1,n,a.sampleRate);
+      const w=white.getChannelData(0),b=brown.getChannelData(0);let last=0,mx=0;
+      for(let i=0;i<n;i++){w[i]=Math.random()*2-1;last=(last+.02*w[i])/1.02;b[i]=last;mx=Math.max(mx,Math.abs(last))}
+      for(let i=0;i<n;i++)b[i]/=mx}
     if(a.state==='suspended')a.resume()}catch(e){a=null}}
+  const running=()=>!!a&&a.state==='running';
+  function ready(fn){if(!a){fn();return}try{a.resume().then(fn,fn)}catch(e){fn()}}
   function env(g,t,v,att,dur){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur)}
-  function nz(t,dur,type,f0,f1,v,q){const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
-    s.buffer=noise;s.loop=true;f.type=type;f.Q.value=q||1;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
-    env(g,t,v,Math.min(.02,dur/3),dur);s.connect(f);f.connect(g);g.connect(m);s.start(t);s.stop(t+dur+.05)}
-  function tone(f0,f1,t,dur,v,type){const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';
-    o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);env(g,t,v,.005,dur);o.connect(g);g.connect(m);o.start(t);o.stop(t+dur+.05)}
-  return{unlock,
-    intro(){ if(!a)return; const now=a.currentTime+.05;      // same timeline as the CSS animation
+  // filtered noise burst
+  function nz(t,dur,type,f0,f1,v,q,buf,att){const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+    s.buffer=buf||white;s.loop=true;s.loopStart=0;f.type=type;f.Q.value=q||.7;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    env(g,t,v,att||Math.min(.02,dur/3),dur);s.connect(f);f.connect(g);g.connect(m);s.start(t,Math.random());s.stop(t+dur+.05)}
+  // ceramic "tink": a few inharmonic partials, fast decay
+  function tink(t,v){[2700,4150,5480,7300].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=f*(1+Math.random()*.01);
+    env(g,t,v/(i+1.4),.002,.07+.09/(i+1));o.connect(g);g.connect(m);o.start(t);o.stop(t+.25)});nz(t,.015,'highpass',5000,9000,v*.5,1)}
+  return{unlock,running,ready,
+    steps(){ if(!running())return; const now=a.currentTime+.05;                    // soft footsteps
+      for(let i=0;i<7;i++){const t=now+.1+i*.31;nz(t,.09,'lowpass',420,110,.3+(i%2)*.08,.6,brown,.004);nz(t,.03,'bandpass',1500,900,.04,1)}},
+    hops(){ if(!running())return; const now=a.currentTime+.05;                     // three soft landings
+      for(let k=0;k<3;k++){const t=now+.45+k*.55;nz(t,.24,'lowpass',380,70,.7,.6,brown,.003);nz(t+.01,.1,'lowpass',1300,300,.16,.7,white,.003)}},
+    intro(){ if(!running())return; const now=a.currentTime+.05;      // same timeline as the CSS animation
       for(let i=0;i<5;i++){
         const fall=now+i*.45+.2,land=fall+.66;
-        nz(fall,.62,'bandpass',2200,450,.05,.8);                                   // whoosh as the layer falls
-        if(i===0){tone(1300,900,land,.28,.1,'sine');tone(1950,1500,land,.22,.05,'sine')}   // plate clink
-        else if(i<4){tone(175-i*12,55,land,.3,.55,'sine');nz(land,.09,'lowpass',1000,200,.3)} // soft cake thud
-        else{[0,.08,.16].forEach((k,j)=>tone(950+j*250,750,land+k,.07,.1,'triangle'))}       // candles tick into place
+        nz(fall+.1,.5,'bandpass',900,350,.035,.5);                                   // faint air rush
+        if(i===0){tink(land,.1);nz(land,.05,'bandpass',1500,900,.08,1)}              // plate sets down
+        else if(i<4){const w=[0,1,.82,.66][i];
+          nz(land,.28,'lowpass',380,70,.95*w,.6,brown,.003);                          // soft sponge thump
+          nz(land,.12,'lowpass',1400,300,.22*w,.7,white,.003);                        // frosting squish
+          nz(land+.05,.16,'bandpass',700,320,.07*w,.9)}                              // little settle
+        else{[0,.09,.17].forEach(k=>{nz(land+k,.035,'bandpass',1800,900,.07,2)});}   // candles tap in
       }
-      [0,.14,.28].forEach((k,j)=>{const t=now+3.15+k;                               // each candle lights
-        nz(t,.14,'highpass',3500,7000,.1);                                         // match scratch
-        nz(t+.1,.4,'bandpass',500,2600,.12,.6);tone(130,60,t+.1,.3,.14,'sine');    // fwoomp
-        for(let c=0;c<5;c++)nz(t+.25+Math.random()*.9,.025,'highpass',4000,9000,.05)}) // little crackles
+      [0,.16,.3].forEach(k=>{const t=now+3.15+k;                                     // each candle lights
+        for(let j=0;j<5;j++)nz(t+j*.035,.04,'bandpass',2600+Math.random()*1500,1800,.07,1.4);  // match scratch
+        nz(t+.2,.5,'highpass',1500,5000,.1,.6,white,.12);                            // flare "fsshh"
+        nz(t+.2,.45,'lowpass',600,160,.25,.6,brown,.08);                             // gas puff
+        for(let c=0;c<6;c++)nz(t+.45+Math.random()*1.1,.02,'highpass',3500,8000,.035+Math.random()*.03,1)  // wax crackle
+      });
+      nz(now+3.6,1.6,'bandpass',2000,1500,.02,.4,white,.5);                          // gentle flame hush
     }};
 })();
 
