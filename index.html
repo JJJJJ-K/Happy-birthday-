@@ -216,6 +216,7 @@ body.opened .mute{opacity:1;pointer-events:auto;transition:opacity .6s 3.2s}
  
   <!-- Gift page -->
   <section class="page off" id="gift">
+  <section class="page off" id="gift">
     <div class="bearwrap" id="bearWrap"></div>
     <p class="hello txt" style="--d:0s" data-hello></p>
     <h1 class="txt" style="--d:.15s">Happy 18th Birthday<br>Risie! 💜</h1>
@@ -223,10 +224,11 @@ body.opened .mute{opacity:1;pointer-events:auto;transition:opacity .6s 3.2s}
       18 KANAAAAA!✨ <span data-wish></span><br>
       <b>I hope you enjoy your special day😁🥰, Risie! 🎂💜</b>
     </div>
-    <button class="rise" style="--d:1.3s" id="replayBtn">Replay 🔄</button>
+    <button class="txt" style="--d:.7s" id="replayBtn">Replay 🔄</button>
   </section>
 </div>
 
+<div id="err" style="display:none;position:fixed;z-index:99;left:4px;right:4px;bottom:4px;padding:4px 8px;font:11px Arial,sans-serif;color:#ffb4c2;background:rgba(0,0,0,.6);border-radius:6px;pointer-events:none"></div>
 <button class="mute" id="muteBtn" aria-label="Toggle music">🎵</button>
 
 <script>
