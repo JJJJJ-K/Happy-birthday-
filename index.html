@@ -471,7 +471,15 @@ function tapGift(){
 }
 btn.addEventListener('click',tapGift);
 btn.addEventListener('pointerup',tapGift);
-function showGift(){gift.classList.remove('off');gift.classList.add('in')}
+let shown=false;
+function showGift(){gift.classList.remove('off');if(!shown){shown=true;bearShow()}}
+function bearShow(){                                       // bear walks in -> celebrates -> message appears
+  const w=document.getElementById('bearWrap');
+  gift.classList.add('in');w.classList.remove('jump');w.classList.add('walk');
+  try{Sfx.steps()}catch(e){}
+  later(()=>{w.classList.remove('walk');w.classList.add('jump');party();try{Sfx.hops()}catch(e){}},2300);
+  later(()=>{w.classList.remove('jump');gift.classList.add('msgin')},4100);   // <- this line reveals the message
+}
 function forceGift(){                                       // last resort if transitions misbehave on a device
   showGift();gift.style.cssText='opacity:1;visibility:visible;transform:none';start.style.visibility='hidden';
 }
@@ -481,7 +489,7 @@ function open(){
   start.classList.add('off');              // opening page turns 180° and leaves
   later(showGift,3000);                    // city is shown first
   later(forceGift,5000);                   // safety: the wish page must appear
-  later(party,4300);
+  later(()=>gift.classList.add('msgin'),9500);   // safety: the message must appear
 }
 function party(){
   const cols=['#ffe78a','#ff82d8','#9f8cff','#78eaff','#fff'];
@@ -497,7 +505,8 @@ function clearConfetti(){confetti.forEach(c=>c.remove());confetti=[]}
 function replay(){
   timers.forEach(clearTimeout);timers=[];clearConfetti();Music.stop();busy=true;gift.removeAttribute('style');start.removeAttribute('style');
   document.body.classList.remove('opened');
-  gift.classList.add('off');gift.classList.remove('in');   // turns back 180°
+  gift.classList.add('off');gift.classList.remove('in','msgin');shown=false;   // turns back 180°
+  const bw=document.getElementById('bearWrap');bw.classList.remove('walk','jump');
   later(()=>{applyGreeting();btn.classList.remove('shake');start.classList.remove('play');start.classList.remove('off');opening=false},2200);
   later(playIntro,3600);
 }
